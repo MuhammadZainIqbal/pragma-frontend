@@ -1,4 +1,4 @@
-import React, { useEffect, useMemo, useState } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 import { AppShell } from './components/AppShell'
 import { useReviewStore } from './store/reviewStore'
 import { useReviewStream } from './hooks/useReviewStream'
@@ -74,7 +74,6 @@ export default function App() {
   const run_id    = useRunIdFromUrl()
   const connected = useSupabaseConnectionStatus()
   const initRun           = useReviewStore((s) => s.initRun)
-  const status            = useReviewStore((s) => s.status)
   const setStatus         = useReviewStore((s) => s.setStatus)
   const setFindings       = useReviewStore((s) => s.setFindings)
   const setPrQualityScore = useReviewStore((s) => s.setPrQualityScore)

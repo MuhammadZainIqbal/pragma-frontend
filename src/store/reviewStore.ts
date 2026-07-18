@@ -106,7 +106,7 @@ const initialState: ReviewState = {
 // ── Store ─────────────────────────────────────────────────────────────────────
 
 export const useReviewStore = create<ReviewState & ReviewActions>()(
-  immer((set, get) => ({
+  immer((set) => ({
     ...initialState,
 
     initRun: (run_id, pr_number, repository) =>

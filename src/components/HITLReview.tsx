@@ -1,11 +1,11 @@
-import React, { useState } from 'react'
+import { useState } from 'react'
 import ReactDiffViewer, { DiffMethod } from 'react-diff-viewer-continued'
 import { useReviewStore, selectActiveFindings, selectCriticalCount } from '../store/reviewStore'
 import type { AgentFinding, Severity } from '../store/reviewStore'
 
 // ── Custom diff viewer styles matching our Industrial Command Center palette ──
 const API_BASE_URL = import.meta.env.PROD 
-  ? "https://muhammadzainiqbal-pragma-backend.hf.space" 
+  ? "https://pragma-backend-sxvw.onrender.com" 
   : ""; // Vite dev proxy targets localhost:8000
 
 const diffStyles = {
