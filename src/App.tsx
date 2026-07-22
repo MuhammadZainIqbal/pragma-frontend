@@ -4,7 +4,7 @@ import { useReviewStore } from './store/reviewStore'
 import { useReviewStream } from './hooks/useReviewStream'
 import { createClient } from '@supabase/supabase-js'
 
-const SUPABASE_URL      = import.meta.env.VITE_SUPABASE_URL as string
+const SUPABASE_URL = import.meta.env.VITE_SUPABASE_URL as string
 const SUPABASE_ANON_KEY = import.meta.env.VITE_SUPABASE_ANON_KEY as string
 
 // Shared supabase client for connection-state polling
@@ -25,7 +25,7 @@ function useSupabaseConnectionStatus(): boolean {
   useEffect(() => {
     // Supabase realtime exposes connection state via the underlying socket
     const { socket } = (supabase.realtime as unknown as { socket: { connectionState: () => string; onOpen: (cb: () => void) => void; onClose: (cb: () => void) => void; onError: (cb: () => void) => void } })
-    
+
     if (!socket) {
       setConnected(false)
       return
@@ -34,7 +34,7 @@ function useSupabaseConnectionStatus(): boolean {
     // Sync initial state
     setConnected(socket.connectionState() === 'open')
 
-    const onOpen  = () => setConnected(true)
+    const onOpen = () => setConnected(true)
     const onClose = () => setConnected(false)
     const onError = () => setConnected(false)
 
@@ -76,7 +76,7 @@ function NoRunState() {
 
       {/* Main Content Area */}
       <main className="flex-1 w-full max-w-6xl mx-auto px-6 sm:px-12 py-16 flex flex-col gap-16">
-        
+
         {/* Section 1: Quickstart User Manual */}
         <section className="flex flex-col gap-8">
           <div className="flex items-center gap-3">
@@ -160,7 +160,7 @@ function NoRunState() {
             <span>Latency: ~2.4s</span>
           </div>
           <div className="flex items-center gap-2">
-            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M12 2v20M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg>
+            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M12 2v20M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6" /></svg>
             <span>Model: Gemini 3.5 Flash</span>
           </div>
           <div className="flex items-center gap-2">
@@ -175,17 +175,17 @@ function NoRunState() {
 
 // ── Root App ──────────────────────────────────────────────────────────────────
 export default function App() {
-  const run_id    = useRunIdFromUrl()
+  const run_id = useRunIdFromUrl()
   const connected = useSupabaseConnectionStatus()
-  
+
   const [isLoading, setIsLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
-  
-  const initRun           = useReviewStore((s) => s.initRun)
-  const setStatus         = useReviewStore((s) => s.setStatus)
-  const setFindings       = useReviewStore((s) => s.setFindings)
+
+  const initRun = useReviewStore((s) => s.initRun)
+  const setStatus = useReviewStore((s) => s.setStatus)
+  const setFindings = useReviewStore((s) => s.setFindings)
   const setPrQualityScore = useReviewStore((s) => s.setPrQualityScore)
-  const appendTelemetry   = useReviewStore((s) => s.appendTelemetry)
+  //const appendTelemetry = useReviewStore((s) => s.appendTelemetry)
 
   // Initialise store with the run context from the URL
   useEffect(() => {
@@ -195,28 +195,28 @@ export default function App() {
       try {
         setIsLoading(true)
         setError(null)
-        
+
         const res = await fetch(`https://pragma-backend-sxvw.onrender.com/api/state?run_id=${run_id}`)
-        
+
         if (!res.ok) {
           throw new Error(`Server returned status ${res.status}`)
         }
 
         const result = await res.json()
-        
+
         if (result && result.values) {
           const values = result.values
           const pr_number = values.pr_number ?? 0
           const repository = values.repository ?? ''
-          
+
           initRun(run_id, pr_number, repository)
 
           if (result.status) {
             const STATUS_MAP: Record<string, any> = {
-              processing:  'running',
+              processing: 'running',
               interrupted: 'paused_hitl',
-              completed:   'complete',
-              error:       'failed'
+              completed: 'complete',
+              error: 'failed'
             }
             const mapped = STATUS_MAP[result.status]
             if (mapped) setStatus(mapped)
@@ -231,7 +231,7 @@ export default function App() {
           if (typeof values.pr_quality_score === 'number') {
             setPrQualityScore(values.pr_quality_score)
           }
-          
+
         } else {
           initRun(run_id, 0, '')
           setError("No review findings found for this run ID.")
