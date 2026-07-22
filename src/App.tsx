@@ -177,6 +177,10 @@ function NoRunState() {
 export default function App() {
   const run_id    = useRunIdFromUrl()
   const connected = useSupabaseConnectionStatus()
+  
+  const [isLoading, setIsLoading] = useState(false)
+  const [error, setError] = useState<string | null>(null)
+  
   const initRun           = useReviewStore((s) => s.initRun)
   const setStatus         = useReviewStore((s) => s.setStatus)
   const setFindings       = useReviewStore((s) => s.setFindings)
@@ -187,77 +191,61 @@ export default function App() {
   useEffect(() => {
     if (!run_id) return
 
-    // Pull lightweight metadata from Supabase on mount to hydrate initial state
-    const bootstrap = async () => {
+    const fetchState = async () => {
       try {
-        const { data } = await supabase
-          .from('github_webhook_payloads')
-          .select('run_id, repository, payload, status, final_findings, human_edits, pr_quality_score')
-          .eq('run_id', run_id)
-          .maybeSingle()
+        setIsLoading(true)
+        setError(null)
+        
+        const res = await fetch(`https://pragma-backend-sxvw.onrender.com/api/state?run_id=${run_id}`)
+        
+        if (!res.ok) {
+          throw new Error(`Server returned status ${res.status}`)
+        }
 
-        if (data) {
-          const pr_number = data.payload?.pull_request?.number ?? 0
-          const repository = data.repository ?? ''
+        const result = await res.json()
+        
+        if (result && result.values) {
+          const values = result.values
+          const pr_number = values.pr_number ?? 0
+          const repository = values.repository ?? ''
           
-          // Initialise the store
           initRun(run_id, pr_number, repository)
 
-          // Hydrate historical state
-          if (data.status) {
-            // Map plain string to ReviewStatus
+          if (result.status) {
             const STATUS_MAP: Record<string, any> = {
-              pending:     'waiting',
-              running:     'running',
-              paused_hitl: 'paused_hitl',
-              resuming:    'resuming',
-              complete:    'complete',
-              failed:      'failed',
+              processing:  'running',
+              interrupted: 'paused_hitl',
+              completed:   'complete',
+              error:       'failed'
             }
-            const mapped = STATUS_MAP[data.status]
+            const mapped = STATUS_MAP[result.status]
             if (mapped) setStatus(mapped)
           }
 
-          if (data.human_edits && Array.isArray(data.human_edits)) {
-            setFindings(data.human_edits as any[])
-          } else if (data.final_findings && Array.isArray(data.final_findings)) {
-            setFindings(data.final_findings as any[])
+          if (values.human_edits && Array.isArray(values.human_edits)) {
+            setFindings(values.human_edits)
+          } else if (values.final_findings && Array.isArray(values.final_findings)) {
+            setFindings(values.final_findings)
           }
 
-          if (typeof data.pr_quality_score === 'number') {
-            setPrQualityScore(data.pr_quality_score)
-          }
-
-          // Hydrate historical telemetry ticks
-          const { data: telemetryData } = await supabase
-            .from('review_telemetry')
-            .select('*')
-            .eq('run_id', run_id)
-            .order('timestamp', { ascending: true })
-
-          if (telemetryData) {
-            telemetryData.forEach((tick) => {
-              appendTelemetry({
-                node_name:         String(tick.node_name ?? ''),
-                execution_time_ms: Number(tick.execution_time_ms ?? 0),
-                input_tokens:      Number(tick.input_tokens ?? 0),
-                output_tokens:     Number(tick.output_tokens ?? 0),
-                cost_usd:          Number(tick.cost_usd ?? 0),
-              })
-            })
+          if (typeof values.pr_quality_score === 'number') {
+            setPrQualityScore(values.pr_quality_score)
           }
           
         } else {
-          // Unknown run_id — initialise with defaults; Realtime will hydrate the rest
           initRun(run_id, 0, '')
+          setError("No review findings found for this run ID.")
         }
-      } catch {
-        // Supabase unreachable — still initialise so Realtime hook can attach
+      } catch (err: any) {
+        console.error("Failed to fetch run state:", err)
         initRun(run_id, 0, '')
+        setError(err.message || "Failed to load review state.")
+      } finally {
+        setIsLoading(false)
       }
     }
 
-    bootstrap()
+    fetchState()
   }, [run_id])
 
   // Mount the Realtime subscription — strict teardown is handled inside the hook
@@ -265,6 +253,28 @@ export default function App() {
 
   // Show the no-run splash screen if there's no run_id in the URL
   if (!run_id) return <NoRunState />
+
+  if (isLoading) {
+    return (
+      <div className="min-h-screen bg-background flex flex-col items-center justify-center">
+        <div className="flex flex-col items-center gap-4">
+          <div className="w-8 h-8 rounded-full border-4 border-charcoal/20 border-t-charcoal animate-spin" />
+          <p className="text-secondary font-mono text-sm">Analyzing Pull Request...</p>
+        </div>
+      </div>
+    )
+  }
+
+  if (error) {
+    return (
+      <div className="min-h-screen bg-background flex flex-col items-center justify-center gap-4 px-4">
+        <div className="bg-surface border border-critical/20 rounded-2xl px-8 py-10 max-w-md w-full text-center">
+          <p className="font-mono font-bold text-critical text-lg tracking-tight mb-2">Error Loading State</p>
+          <p className="text-sm text-secondary leading-relaxed">{error}</p>
+        </div>
+      </div>
+    )
+  }
 
   return <AppShell connected={connected} />
 }
