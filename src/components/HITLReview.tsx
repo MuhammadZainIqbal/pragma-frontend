@@ -184,16 +184,24 @@ export function HITLReview() {
   const status        = useReviewStore((s) => s.status)
   const quality       = useReviewStore((s) => s.pr_quality_score)
   const totalCost     = useReviewStore((s) => s.total_cost_usd)
+  const telemetry     = useReviewStore((s) => s.telemetry)
   const isSubmitting  = useReviewStore((s) => s.isSubmitting)
   const setSubmitting = useReviewStore((s) => s.setSubmitting)
   const setStatus     = useReviewStore((s) => s.setStatus)
   const setError      = useReviewStore((s) => s.setError)
 
+  const [isApproved, setIsApproved] = useState(false)
+
+  const isDemoMode = run_id === 'demo-sample-run'
+
+  // Total tokens across all nodes
+  const totalTokens = telemetry.reduce((acc, t) => acc + t.input_tokens + t.output_tokens, 0)
+
   const activeFindings = selectActiveFindings({ findings } as Parameters<typeof selectActiveFindings>[0])
   const criticalCount  = selectCriticalCount({ findings } as Parameters<typeof selectCriticalCount>[0])
 
   const handleApprove = async () => {
-    if (!run_id || isSubmitting) return
+    if (!run_id || isSubmitting || isApproved || isDemoMode) return
     setSubmitting(true)
     setError(null)
 
@@ -209,6 +217,7 @@ export function HITLReview() {
         throw new Error(body?.detail ?? `HTTP ${res.status}`)
       }
 
+      setIsApproved(true)
       setStatus('resuming')
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Unknown error during approval')
@@ -241,30 +250,50 @@ export function HITLReview() {
             <span className={quality >= 0.7 ? 'text-success font-medium' : 'text-critical font-medium'}>
               {(quality * 100).toFixed(0)}%
             </span>
-            {' '}· Total cost{' '}
-            <span className="font-mono">${totalCost.toFixed(6)}</span>
+            {' '}·{' '}
+            {totalCost > 0
+              ? <><span className="font-mono">${totalCost.toFixed(6)}</span> · {totalTokens.toLocaleString()} tokens processed</>
+              : <span className="font-mono text-success">$0.0000 (Free Tier)</span>
+            }
           </p>
+          {isDemoMode && (
+            <p className="text-xs text-warning font-mono mt-1">⚠ Read-only demo mode — actions are simulated</p>
+          )}
         </div>
 
-        <button
-          onClick={handleApprove}
-          disabled={isSubmitting || activeFindings.length === 0 && findings.length > 0}
-          className={[
-            'inline-flex items-center gap-2 px-6 py-2.5 rounded-pill text-sm font-semibold transition-all',
-            isSubmitting
-              ? 'bg-overlay text-muted cursor-not-allowed'
-              : 'bg-charcoal text-background hover:bg-secondary active:scale-95',
-          ].join(' ')}
-        >
-          {isSubmitting ? (
-            <>
-              <span className="inline-block w-3.5 h-3.5 border-2 border-muted border-t-transparent rounded-full animate-spin" />
-              Submitting…
-            </>
-          ) : (
-            'Approve & Resume →'
-          )}
-        </button>
+        {/* Approve button — locked after first success or in demo mode */}
+        {isApproved ? (
+          <div className="inline-flex items-center gap-2 px-5 py-2.5 rounded-pill text-sm font-semibold bg-success-surface text-success border border-success/20">
+            <span>✅ Review Approved &amp; Pipeline Resumed</span>
+          </div>
+        ) : isDemoMode ? (
+          <div className="flex flex-col items-end gap-1">
+            <div className="inline-flex items-center gap-2 px-5 py-2.5 rounded-pill text-sm font-semibold bg-overlay text-muted border border-border cursor-not-allowed">
+              Read-Only Demo Mode
+            </div>
+            <span className="text-2xs text-muted font-mono">Action simulated for demonstration purposes.</span>
+          </div>
+        ) : (
+          <button
+            onClick={handleApprove}
+            disabled={isSubmitting || (activeFindings.length === 0 && findings.length > 0)}
+            className={[
+              'inline-flex items-center gap-2 px-6 py-2.5 rounded-pill text-sm font-semibold transition-all',
+              isSubmitting
+                ? 'bg-overlay text-muted cursor-not-allowed'
+                : 'bg-charcoal text-background hover:bg-secondary active:scale-95',
+            ].join(' ')}
+          >
+            {isSubmitting ? (
+              <>
+                <span className="inline-block w-3.5 h-3.5 border-2 border-muted border-t-transparent rounded-full animate-spin" />
+                Submitting Approval Gate…
+              </>
+            ) : (
+              'Approve & Resume →'
+            )}
+          </button>
+        )}
       </div>
 
       {/* Finding cards */}

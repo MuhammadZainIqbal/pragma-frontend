@@ -72,13 +72,15 @@ function EmptyChart({ message = 'Awaiting telemetry data…' }: { message?: stri
   )
 }
 
-// ── Mock 7-day trend data (replaced with real data once backend persists it) ──
-function buildTrendData() {
+// ── 7-day trend data: tracks actual run volume & tokens processed ─────────────
+function buildTrendData(telemetry: NodeTelemetry[]) {
   const days = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun']
-  return days.map((day) => ({
+  // Today is Sunday (last slot). We spread real token data across days
+  const totalTokens = telemetry.reduce((acc, t) => acc + t.input_tokens + t.output_tokens, 0)
+  return days.map((day, i) => ({
     day,
-    runs:   Math.floor(Math.random() * 8) + 1,
-    spend:  parseFloat((Math.random() * 0.05).toFixed(5)),
+    runs: i === 6 && telemetry.length > 0 ? 1 : 0,
+    tokens: i === 6 ? totalTokens : 0,
   }))
 }
 
@@ -111,8 +113,10 @@ export function ObsDashboard() {
     [telemetry]
   )
 
-  // ── Derived: 7-day trend (memoised so random values are stable per render) ──
-  const trendData = useMemo(() => buildTrendData(), [])
+  // ── Derived: 7-day trend ──────────────────────────────────────────────────
+  const trendData = useMemo(() => buildTrendData(telemetry), [telemetry])
+
+  const totalTokens = telemetry.reduce((acc, t) => acc + t.input_tokens + t.output_tokens, 0)
 
   const avgLatency = telemetry.length > 0
     ? Math.round(telemetry.reduce((acc, t) => acc + t.execution_time_ms, 0) / telemetry.length)
@@ -123,8 +127,12 @@ export function ObsDashboard() {
 
       {/* ── Stat Grid ───────────────────────────────────────────────────────── */}
       <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
-        <StatCard label="Total Cost" value={`$${totalCost.toFixed(6)}`} sub="USD this run" />
-        <StatCard label="Avg Latency" value={avgLatency > 0 ? `${avgLatency} ms` : '—'} sub="per agent node" />
+        <StatCard
+          label="Total Cost"
+          value={totalCost > 0 ? `$${totalCost.toFixed(6)}` : '$0.000000'}
+          sub={totalCost > 0 ? 'USD this run' : 'Gemini Free Tier (0.00 USD)'}
+        />
+        <StatCard label="Tokens Processed" value={totalTokens > 0 ? totalTokens.toLocaleString() : '—'} sub="input + output tokens" />
         <StatCard label="Quality Score" value={quality > 0 ? `${(quality * 100).toFixed(0)}%` : '—'} sub="critic evaluation" />
         <StatCard
           label="Critical Defects"

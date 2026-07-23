@@ -53,7 +53,7 @@ function NoRunState() {
   return (
     <div className="min-h-screen bg-background text-charcoal flex flex-col font-sans">
       {/* Header / Hero Section */}
-      <header className="w-full bg-surface border-b border-border py-16 px-6 sm:px-12 flex flex-col items-center text-center">
+      <header className="w-full bg-surface border-b border-border py-32 px-6 sm:px-12 flex flex-col items-center text-center">
         <div className="inline-flex items-center gap-2 px-3 py-1 bg-overlay border border-border rounded-full text-xs font-mono font-medium text-secondary mb-6">
           <div className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></div>
           PRAGMA ENGINE v1.0 // ACTIVE
@@ -150,21 +150,127 @@ function NoRunState() {
           </div>
         </section>
 
+        {/* Section 3: Interactive Architecture Workflow Diagram */}
+        <section className="flex flex-col gap-8">
+          <div className="flex items-center gap-3">
+            <h2 className="text-2xl font-bold tracking-tight">How PRAGMA Works Under the Hood</h2>
+            <div className="h-px bg-border flex-1 ml-4"></div>
+          </div>
+          <div className="bg-surface border border-border rounded-2xl p-8 font-mono text-sm overflow-x-auto">
+            {/* Row 1: GitHub PR */}
+            <div className="flex flex-col items-center gap-0">
+              <div className="group relative bg-background border border-border rounded-xl px-6 py-4 w-72 text-center hover:border-charcoal transition-colors cursor-default">
+                <div className="text-xs font-semibold text-muted uppercase tracking-widest mb-1">① Trigger</div>
+                <div className="font-bold text-charcoal">GitHub Pull Request</div>
+                <div className="text-xs text-secondary mt-1">Webhook POST Event → FastAPI</div>
+                <div className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 w-64 bg-charcoal text-white text-xs rounded-lg px-3 py-2 opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none z-10 text-left leading-relaxed">
+                  GitHub sends a signed <code>pull_request</code> webhook to your Render backend. PRAGMA reads the diff URL and queues a background analysis job.
+                </div>
+              </div>
+              <div className="flex flex-col items-center">
+                <div className="w-px h-6 bg-border"></div>
+                <div className="text-muted text-xs">▼</div>
+              </div>
+
+              {/* Row 2: FastAPI Gate */}
+              <div className="group relative bg-background border border-border rounded-xl px-6 py-4 w-72 text-center hover:border-charcoal transition-colors cursor-default">
+                <div className="text-xs font-semibold text-muted uppercase tracking-widest mb-1">② Security Gate</div>
+                <div className="font-bold text-charcoal">FastAPI Backend</div>
+                <div className="text-xs text-secondary mt-1">Event Validation &amp; Diff Fetching</div>
+                <div className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 w-64 bg-charcoal text-white text-xs rounded-lg px-3 py-2 opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none z-10 text-left leading-relaxed">
+                  Validates the <code>X-GitHub-Event</code> header, fetches the raw unified diff from the GitHub REST API, and spawns a LangGraph thread.
+                </div>
+              </div>
+              <div className="flex flex-col items-center">
+                <div className="w-px h-6 bg-border"></div>
+                <div className="text-muted text-xs">▼</div>
+              </div>
+
+              {/* Row 3: LangGraph */}
+              <div className="group relative bg-charcoal text-white rounded-xl px-6 py-4 w-80 text-center hover:opacity-90 transition-opacity cursor-default">
+                <div className="text-xs font-semibold text-white/50 uppercase tracking-widest mb-1">③ Orchestration</div>
+                <div className="font-bold">LangGraph State Machine</div>
+                <div className="text-xs text-white/70 mt-1">Postgres Async Checkpointer · Parallel Fan-Out</div>
+                <div className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 w-72 bg-white text-charcoal text-xs rounded-lg px-3 py-2 opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none z-10 text-left leading-relaxed border border-border shadow-lg">
+                  LangGraph compiles a typed <code>PRReviewState</code> graph. It uses <code>AsyncPostgresSaver</code> on Supabase to checkpoint state, enabling HITL interruption and resumption.
+                </div>
+              </div>
+              <div className="flex flex-col items-center">
+                <div className="w-px h-6 bg-border"></div>
+                <div className="text-muted text-xs">▼</div>
+              </div>
+
+              {/* Row 4: 3 Parallel Agents */}
+              <div className="flex flex-col sm:flex-row items-start justify-center gap-4 w-full">
+                {[
+                  { step: '④a', emoji: '🛡️', name: 'Security Agent', color: 'border-red-300 hover:border-red-500', badge: 'bg-red-100 text-red-700', desc: 'Scans for OWASP Top 10: SQL injection, hardcoded secrets, SSRF, prototype pollution, and broken auth. Staggered 0s delay.' },
+                  { step: '④b', emoji: '🏗️', name: 'Architecture Agent', color: 'border-blue-300 hover:border-blue-500', badge: 'bg-blue-100 text-blue-700', desc: 'Detects N+1 queries, blocking calls inside async functions, circular dependencies, and API anti-patterns. Staggered 1.5s delay.' },
+                  { step: '④c', emoji: '🎨', name: 'Style Agent', color: 'border-purple-300 hover:border-purple-500', badge: 'bg-purple-100 text-purple-700', desc: 'Enforces logic safety, dead code elimination, off-by-one index checks, and naming convention standards. Staggered 3.0s delay.' },
+                ].map(({ step, emoji, name, color, badge, desc }) => (
+                  <div key={name} className={`group relative bg-background border ${color} rounded-xl px-4 py-4 flex-1 text-center transition-colors cursor-default`}>
+                    <div className={`text-xs font-semibold uppercase tracking-widest mb-1 px-2 py-0.5 rounded-full inline-block ${badge}`}>{step}</div>
+                    <div className="text-lg mb-1">{emoji}</div>
+                    <div className="font-bold text-charcoal text-sm">{name}</div>
+                    <div className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 w-60 bg-charcoal text-white text-xs rounded-lg px-3 py-2 opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none z-10 text-left leading-relaxed">
+                      {desc}
+                    </div>
+                  </div>
+                ))}
+              </div>
+              <div className="flex flex-col items-center">
+                <div className="w-px h-6 bg-border"></div>
+                <div className="text-muted text-xs">▼</div>
+              </div>
+
+              {/* Row 5: Critic */}
+              <div className="group relative bg-background border border-border rounded-xl px-6 py-4 w-80 text-center hover:border-charcoal transition-colors cursor-default">
+                <div className="text-xs font-semibold text-muted uppercase tracking-widest mb-1">⑤ Consensus</div>
+                <div className="font-bold text-charcoal">⚖️ Critic &amp; Aggregator Node</div>
+                <div className="text-xs text-secondary mt-1">Deduplication · Hallucination Guard · Quality Score</div>
+                <div className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 w-72 bg-charcoal text-white text-xs rounded-lg px-3 py-2 opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none z-10 text-left leading-relaxed">
+                  Uses <code>unidiff</code> to verify every agent citation against real diff lines. Deduplicates by <code>(file_path, line_number)</code>, elevates severity, and scores PR quality 0.0–1.0.
+                </div>
+              </div>
+              <div className="flex flex-col items-center">
+                <div className="w-px h-6 bg-border"></div>
+                <div className="text-muted text-xs">▼</div>
+              </div>
+
+              {/* Row 6: Staging Gate */}
+              <div className="group relative border-2 border-dashed border-charcoal rounded-xl px-6 py-4 w-80 text-center cursor-default">
+                <div className="text-xs font-semibold text-muted uppercase tracking-widest mb-1">⑥ Human Gate</div>
+                <div className="font-bold text-charcoal">💬 Interactive Staging Gate</div>
+                <div className="text-xs text-secondary mt-1">GitHub Comment → This Dashboard → Approve</div>
+                <div className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 w-72 bg-charcoal text-white text-xs rounded-lg px-3 py-2 opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none z-10 text-left leading-relaxed">
+                  LangGraph interrupts before the publisher node. A GitHub comment links to this dashboard. You inspect findings, edit suggestions, dismiss noise, then Approve &amp; Resume to publish.
+                </div>
+              </div>
+            </div>
+          </div>
+          <div className="flex justify-center">
+            <a
+              href="/?run_id=demo-sample-run"
+              className="inline-flex items-center gap-2 px-8 py-3 bg-charcoal text-white rounded-xl font-medium hover:bg-secondary transition-colors shadow-sm"
+            >
+              <span>⚡</span>
+              Explore Interactive Sample Run
+            </a>
+          </div>
+        </section>
+
       </main>
 
-      {/* Section 3: System Telemetry Stats Bar */}
+      {/* Footer */}
       <footer className="w-full bg-charcoal text-white py-4 px-6 mt-auto">
         <div className="max-w-6xl mx-auto flex flex-col sm:flex-row items-center justify-between gap-4 font-mono text-xs opacity-80">
           <div className="flex items-center gap-2">
             <div className="w-1.5 h-1.5 rounded-full bg-emerald-400"></div>
-            <span>Latency: ~2.4s</span>
+            <span>SYSTEM ACTIVE · $0 Infrastructure</span>
           </div>
           <div className="flex items-center gap-2">
-            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M12 2v20M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6" /></svg>
             <span>Model: Gemini 3.5 Flash</span>
           </div>
           <div className="flex items-center gap-2">
-            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"></path><polyline points="3.27 6.96 12 12.01 20.73 6.96"></polyline><line x1="12" y1="22.08" x2="12" y2="12"></line></svg>
             <span>Orchestrator: LangGraph Async State Graph</span>
           </div>
         </div>

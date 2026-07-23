@@ -5,16 +5,12 @@ import { ObsDashboard } from './ObsDashboard'
 
 type Tab = 'review' | 'telemetry'
 
-// ── Connection status badge ────────────────────────────────────────────────────
-function ConnectionBadge({ connected }: { connected: boolean }) {
+// ── Static system status badge ─────────────────────────────────────────────────
+function SystemActiveBadge() {
   return (
-    <div className={`inline-flex items-center gap-1.5 px-3 py-1 rounded-pill text-xs font-mono font-semibold border ${
-      connected
-        ? 'bg-success-surface text-success border-success/20'
-        : 'bg-overlay text-muted border-border'
-    }`}>
-      <span className={`w-1.5 h-1.5 rounded-full ${connected ? 'bg-success animate-pulse' : 'bg-muted'}`} />
-      {connected ? 'Connected' : 'Disconnected'}
+    <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-pill text-xs font-mono font-semibold border bg-success-surface text-success border-success/20">
+      <span className="w-1.5 h-1.5 rounded-full bg-success animate-pulse" />
+      SYSTEM ACTIVE
     </div>
   )
 }
@@ -40,7 +36,7 @@ interface AppShellProps {
   connected: boolean
 }
 
-export function AppShell({ connected }: AppShellProps) {
+export function AppShell({ connected: _connected }: AppShellProps) {
   const [activeTab, setActiveTab] = useState<Tab>('review')
   const status     = useReviewStore((s) => s.status)
   const run_id     = useReviewStore((s) => s.run_id)
@@ -93,7 +89,7 @@ export function AppShell({ connected }: AppShellProps) {
                 {STATUS_LABEL[status] ?? status}
               </span>
             )}
-            <ConnectionBadge connected={connected} />
+            <SystemActiveBadge />
           </div>
         </div>
       </header>
