@@ -65,7 +65,7 @@ function NoRunState() {
           Multi-agent AI code analysis engine powered by LangGraph &amp; Gemini. Intercepting pull requests, detecting security vulnerabilities, and streaming real-time review metrics.
         </p>
         <div className="flex flex-col sm:flex-row gap-4 w-full sm:w-auto">
-          <a href="https://github.com/apps/pragma-review" target="_blank" rel="noreferrer" className="px-6 py-3 bg-charcoal text-white rounded-lg font-medium hover:bg-opacity-90 transition-colors shadow-sm">
+          <a href="https://github.com/apps/pragma-pr-analyzer" target="_blank" rel="noreferrer" className="px-6 py-3 bg-charcoal text-white rounded-lg font-medium hover:bg-opacity-90 transition-colors shadow-sm">
             Install GitHub App
           </a>
           <a href="/?run_id=demo-sample-run" className="px-6 py-3 bg-surface border border-border text-charcoal rounded-lg font-medium hover:bg-overlay transition-colors shadow-sm">
@@ -77,32 +77,30 @@ function NoRunState() {
       {/* Main Content Area */}
       <main className="flex-1 w-full max-w-6xl mx-auto px-6 sm:px-12 py-16 flex flex-col gap-16">
 
-        {/* Section 1: Quickstart User Manual */}
+        {/* Section 1: Quickstart & Permissions Guide */}
         <section className="flex flex-col gap-8">
           <div className="flex items-center gap-3">
-            <h2 className="text-2xl font-bold tracking-tight">How to Integrate PRAGMA in 60 Seconds</h2>
+            <h2 className="text-2xl font-bold tracking-tight">Installation &amp; Permissions Guide</h2>
             <div className="h-px bg-border flex-1 ml-4"></div>
           </div>
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
             <div className="bg-surface border border-border p-6 rounded-xl flex flex-col gap-3 relative overflow-hidden">
               <div className="absolute top-0 right-0 p-4 text-6xl font-black text-overlay opacity-50 select-none">1</div>
-              <h3 className="font-bold text-lg z-10">Install GitHub App</h3>
-              <p className="text-secondary text-sm z-10 leading-relaxed">Authorize PRAGMA on your target repositories to grant webhook access.</p>
+              <h3 className="font-bold text-lg z-10">Install PRAGMA App</h3>
+              <p className="text-secondary text-sm z-10 leading-relaxed">Click [ Install GitHub App ] and select your target repositories to authorize access.</p>
             </div>
             <div className="bg-surface border border-border p-6 rounded-xl flex flex-col gap-3 relative overflow-hidden">
               <div className="absolute top-0 right-0 p-4 text-6xl font-black text-overlay opacity-50 select-none">2</div>
-              <h3 className="font-bold text-lg z-10">Open a Pull Request</h3>
-              <p className="text-secondary text-sm z-10 leading-relaxed">Push code or open a PR against any protected branch to trigger analysis.</p>
+              <h3 className="font-bold text-lg z-10">Granted Permissions</h3>
+              <div className="text-secondary text-sm z-10 leading-relaxed space-y-2 mt-1">
+                <p><strong>Pull Requests: Read &amp; Write</strong><br/>(Required to post automated review comments)</p>
+                <p><strong>Contents: Read-Only</strong><br/>(Required to inspect code diffs)</p>
+              </div>
             </div>
             <div className="bg-surface border border-border p-6 rounded-xl flex flex-col gap-3 relative overflow-hidden">
               <div className="absolute top-0 right-0 p-4 text-6xl font-black text-overlay opacity-50 select-none">3</div>
-              <h3 className="font-bold text-lg z-10">Automated Analysis</h3>
-              <p className="text-secondary text-sm z-10 leading-relaxed">PRAGMA intercepts the webhook, analyzes diffs across 3 specialized AI agents.</p>
-            </div>
-            <div className="bg-surface border border-border p-6 rounded-xl flex flex-col gap-3 relative overflow-hidden">
-              <div className="absolute top-0 right-0 p-4 text-6xl font-black text-overlay opacity-50 select-none">4</div>
-              <h3 className="font-bold text-lg z-10">Interactive Dashboard</h3>
-              <p className="text-secondary text-sm z-10 leading-relaxed">Click the link on your PR to review streaming telemetry, inspect AST flaws, and approve the build.</p>
+              <h3 className="font-bold text-lg z-10">Enable Webhook Events</h3>
+              <p className="text-secondary text-sm z-10 leading-relaxed">Ensure the <strong>Pull Request</strong> event is checked so PRAGMA intercepts new PRs automatically.</p>
             </div>
           </div>
         </section>
@@ -151,12 +149,12 @@ function NoRunState() {
         </section>
 
         {/* Section 3: Interactive Architecture Workflow Diagram */}
-        <section className="flex flex-col gap-8">
+        <section className="flex flex-col gap-8 pt-16">
           <div className="flex items-center gap-3">
             <h2 className="text-2xl font-bold tracking-tight">How PRAGMA Works Under the Hood</h2>
             <div className="h-px bg-border flex-1 ml-4"></div>
           </div>
-          <div className="bg-surface border border-border rounded-2xl p-8 font-mono text-sm overflow-x-auto">
+          <div className="bg-surface border border-border rounded-2xl p-8 font-mono text-sm overflow-visible">
             {/* Row 1: GitHub PR */}
             <div className="flex flex-col items-center gap-0">
               <div className="group relative bg-background border border-border rounded-xl px-6 py-4 w-72 text-center hover:border-charcoal transition-colors cursor-default">
@@ -301,6 +299,66 @@ export default function App() {
       try {
         setIsLoading(true)
         setError(null)
+
+        if (run_id === 'demo-sample-run' || run_id === 'demo') {
+          const DEMO_SAMPLE_DATA = {
+            status: "paused_hitl",
+            quality_score: 88,
+            critical_count: 1,
+            total_cost: 0.000000,
+            telemetry: [
+              { node_name: "security_agent", latency_ms: 1240, input_tokens: 3420, output_tokens: 410, cost_usd: 0 },
+              { node_name: "architecture_agent", latency_ms: 980, input_tokens: 3100, output_tokens: 320, cost_usd: 0 },
+              { node_name: "style_agent", latency_ms: 750, input_tokens: 2800, output_tokens: 210, cost_usd: 0 }
+            ],
+            findings: [
+              {
+                severity: "CRITICAL",
+                file_path: "master.c",
+                line_number: "898-910",
+                description: "The 'unsafeMerge' utility function is vulnerable to Prototype Pollution. It recursively copies properties from an untrusted source object without key sanitization, allowing RCE via '__proto__'.",
+                suggestion: "Sanitize keys before assignment or use Object.create(null) for unpollutable target dictionaries.",
+                diff_citation: "+ function unsafeMerge(target, source) {\n+   for (let key in source) {\n+     if (source.hasOwnProperty(key)) {"
+              },
+              {
+                severity: "WARNING",
+                file_path: "telemetry.py",
+                line_number: "42",
+                description: "Second-order SQL injection potential in async background pipeline. Raw string interpolation detected on 'patch_notes'.",
+                suggestion: "Use parameterized queries via SQLAlchemy text bind parameters: text('UPDATE device_logs SET logs = :status WHERE notes = :notes')",
+                diff_citation: "- query = f\"UPDATE device_logs SET logs = 'Processed' WHERE notes = '{notes}'\""
+              }
+            ]
+          }
+
+          initRun(run_id, 1337, 'pragma-demo-repo')
+          setStatus(DEMO_SAMPLE_DATA.status as any)
+          setPrQualityScore(DEMO_SAMPLE_DATA.quality_score / 100)
+
+          const mappedFindings = DEMO_SAMPLE_DATA.findings.map(f => ({
+            file_path: f.file_path,
+            line_number: parseInt(f.line_number.split('-')[0]) || parseInt(f.line_number),
+            start_line: f.line_number.includes('-') ? parseInt(f.line_number.split('-')[0]) : null,
+            diff_citation: f.diff_citation,
+            severity: f.severity.toLowerCase() as any,
+            description: f.description,
+            suggestion: f.suggestion
+          }))
+          setFindings(mappedFindings)
+
+          DEMO_SAMPLE_DATA.telemetry.forEach(tick => {
+            appendTelemetry({
+              node_name: tick.node_name,
+              execution_time_ms: tick.latency_ms,
+              input_tokens: tick.input_tokens,
+              output_tokens: tick.output_tokens,
+              cost_usd: tick.cost_usd
+            })
+          })
+
+          setIsLoading(false)
+          return
+        }
 
         const res = await fetch(`https://pragma-backend-sxvw.onrender.com/api/state?run_id=${run_id}`)
 

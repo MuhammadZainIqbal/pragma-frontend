@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import ReactDiffViewer, { DiffMethod } from 'react-diff-viewer-continued'
 import { useReviewStore, selectActiveFindings, selectCriticalCount } from '../store/reviewStore'
 import type { AgentFinding, Severity } from '../store/reviewStore'
@@ -192,6 +192,15 @@ export function HITLReview() {
 
   const [isApproved, setIsApproved] = useState(false)
 
+  useEffect(() => {
+    if (run_id) {
+      const locallyApproved = localStorage.getItem(`pragma_approved_${run_id}`) === 'true'
+      if (status === 'completed' || locallyApproved) {
+        setIsApproved(true)
+      }
+    }
+  }, [run_id, status])
+
   const isDemoMode = run_id === 'demo-sample-run'
 
   // Total tokens across all nodes
@@ -217,6 +226,7 @@ export function HITLReview() {
         throw new Error(body?.detail ?? `HTTP ${res.status}`)
       }
 
+      localStorage.setItem(`pragma_approved_${run_id}`, 'true')
       setIsApproved(true)
       setStatus('resuming')
     } catch (err) {
