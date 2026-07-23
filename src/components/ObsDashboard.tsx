@@ -19,16 +19,16 @@ import type { NodeTelemetry } from '../store/reviewStore'
 
 // ── Palette constants (mirrors tailwind.config.ts tokens) ────────────────────
 const C = {
-  charcoal:  '#1F1F1F',
+  charcoal: '#1F1F1F',
   secondary: '#4A4A44',
-  muted:     '#7A7871',
-  surface:   '#E8E9E1',
-  overlay:   '#DDDDD5',
-  border:    '#CECEC5',
-  success:   '#3A6B48',
-  warning:   '#8C6B2F',
-  critical:  '#8C3130',
-  info:      '#2F5C6E',
+  muted: '#7A7871',
+  surface: '#E8E9E1',
+  overlay: '#DDDDD5',
+  border: '#CECEC5',
+  success: '#3A6B48',
+  warning: '#8C6B2F',
+  critical: '#8C3130',
+  info: '#2F5C6E',
 }
 
 // Distinct accent colours for pie slices (still low-saturation to match palette)
@@ -86,10 +86,10 @@ function buildTrendData(telemetry: NodeTelemetry[]) {
 
 // ── Main component ─────────────────────────────────────────────────────────────
 export function ObsDashboard() {
-  const telemetry  = useReviewStore((s) => s.telemetry)
-  const totalCost  = useReviewStore((s) => s.total_cost_usd)
-  const quality    = useReviewStore((s) => s.pr_quality_score)
-  const findings   = useReviewStore((s) => s.findings)
+  const telemetry = useReviewStore((s) => s.telemetry)
+  const totalCost = useReviewStore((s) => s.total_cost_usd)
+  const quality = useReviewStore((s) => s.pr_quality_score)
+  const findings = useReviewStore((s) => s.findings)
 
   const criticalCount = selectCriticalCount({ findings } as Parameters<typeof selectCriticalCount>[0])
 
@@ -97,7 +97,7 @@ export function ObsDashboard() {
   const latencyData = useMemo<{ name: string; ms: number }[]>(() =>
     telemetry.map((t: NodeTelemetry) => ({
       name: t.node_name.replace(/_node$/, '').replace(/_/g, ' '),
-      ms:   Math.round(t.execution_time_ms),
+      ms: Math.round(t.execution_time_ms),
     })),
     [telemetry]
   )
@@ -107,7 +107,7 @@ export function ObsDashboard() {
     telemetry
       .filter((t) => t.cost_usd > 0)
       .map((t) => ({
-        name:  t.node_name.replace(/_node$/, '').replace(/_/g, ' '),
+        name: t.node_name.replace(/_node$/, '').replace(/_/g, ' '),
         value: parseFloat(t.cost_usd.toFixed(7)),
       })),
     [telemetry]
@@ -211,8 +211,8 @@ export function ObsDashboard() {
               <YAxis yAxisId="runs" tick={{ fontSize: 11, fill: C.muted }} axisLine={false} tickLine={false} width={28} />
               <YAxis yAxisId="spend" orientation="right" tick={{ fontSize: 11, fill: C.muted }} axisLine={false} tickLine={false} width={48} tickFormatter={(v) => `$${v.toFixed(3)}`} />
               <Tooltip contentStyle={tooltipStyle} />
-              <Line yAxisId="runs"  type="monotone" dataKey="runs"  stroke={C.charcoal} strokeWidth={2} dot={{ r: 3, fill: C.charcoal }} name="Runs" />
-              <Line yAxisId="spend" type="monotone" dataKey="spend" stroke={C.success}  strokeWidth={2} dot={{ r: 3, fill: C.success  }} name="Spend ($)" />
+              <Line yAxisId="runs" type="monotone" dataKey="runs" stroke={C.charcoal} strokeWidth={2} dot={{ r: 3, fill: C.charcoal }} name="Runs" />
+              <Line yAxisId="spend" type="monotone" dataKey="spend" stroke={C.success} strokeWidth={2} dot={{ r: 3, fill: C.success }} name="Spend ($)" />
             </LineChart>
           </ResponsiveContainer>
         </div>
@@ -221,3 +221,4 @@ export function ObsDashboard() {
     </div>
   )
 }
+//  npm run dev
