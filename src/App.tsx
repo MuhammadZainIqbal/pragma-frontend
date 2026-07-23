@@ -185,7 +185,7 @@ export default function App() {
   const setStatus = useReviewStore((s) => s.setStatus)
   const setFindings = useReviewStore((s) => s.setFindings)
   const setPrQualityScore = useReviewStore((s) => s.setPrQualityScore)
-  //const appendTelemetry = useReviewStore((s) => s.appendTelemetry)
+  const appendTelemetry = useReviewStore((s) => s.appendTelemetry)
 
   // Initialise store with the run context from the URL
   useEffect(() => {
@@ -230,6 +230,18 @@ export default function App() {
 
           if (typeof values.pr_quality_score === 'number') {
             setPrQualityScore(values.pr_quality_score)
+          }
+
+          if (values.telemetry && Array.isArray(values.telemetry)) {
+            values.telemetry.forEach((tick: any) => {
+              appendTelemetry({
+                node_name: String(tick.node_name ?? ''),
+                execution_time_ms: Number(tick.execution_time_ms ?? tick.latency_ms ?? 0),
+                input_tokens: Number(tick.input_tokens ?? 0),
+                output_tokens: Number(tick.output_tokens ?? 0),
+                cost_usd: Number(tick.cost_usd ?? 0),
+              })
+            })
           }
 
         } else {
