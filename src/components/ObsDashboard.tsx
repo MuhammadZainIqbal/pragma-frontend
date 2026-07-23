@@ -118,9 +118,6 @@ export function ObsDashboard() {
 
   const totalTokens = telemetry.reduce((acc, t) => acc + t.input_tokens + t.output_tokens, 0)
 
-  const avgLatency = telemetry.length > 0
-    ? Math.round(telemetry.reduce((acc, t) => acc + t.execution_time_ms, 0) / telemetry.length)
-    : 0
 
   return (
     <div className="w-full max-w-5xl mx-auto px-4 py-8 flex flex-col gap-6">
