@@ -195,7 +195,7 @@ export function HITLReview() {
   useEffect(() => {
     if (run_id) {
       const locallyApproved = localStorage.getItem(`pragma_approved_${run_id}`) === 'true'
-      if (status === 'completed' || locallyApproved) {
+      if (status === 'complete' || locallyApproved) {
         setIsApproved(true)
       }
     }
