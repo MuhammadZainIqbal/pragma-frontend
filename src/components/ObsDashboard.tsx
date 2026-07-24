@@ -31,8 +31,7 @@ const C = {
   info: '#2F5C6E',
 }
 
-// Distinct accent colours for pie slices (still low-saturation to match palette)
-const AGENT_COLOURS = ['#3A6B48', '#2F5C6E', '#8C6B2F', '#6B4A7A', '#7A7871']
+
 
 // ── Shared Recharts tooltip style ─────────────────────────────────────────────
 const tooltipStyle: React.CSSProperties = {
