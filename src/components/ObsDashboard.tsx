@@ -84,6 +84,48 @@ function buildTrendData(telemetry: NodeTelemetry[]) {
   }))
 }
 
+const AGENT_COLOR_MAP: Record<string, string> = {
+  "security agent": "#ef4444",
+  "security_agent": "#ef4444",
+  "architecture agent": "#3b82f6",
+  "architecture_agent": "#3b82f6",
+  "style agent": "#a855f7",
+  "style_agent": "#a855f7",
+  "publisher": "#64748b"
+}
+
+function processTelemetryData(rawTelemetry: any[]) {
+  if (!rawTelemetry || !Array.isArray(rawTelemetry)) return []
+
+  const map = new Map<string, { name: string; latency_ms: number; total_tokens: number; cost_usd: number; color: string }>()
+
+  rawTelemetry.forEach((item) => {
+    const rawName = item.agent || item.node_name || "unknown"
+    const cleanName = rawName.replace(/_node$/, '').replace(/_/g, " ").toLowerCase().trim()
+
+    const latency = item.execution_time_ms || item.latency_ms || 0
+    const tokens = item.total_tokens || item.tokens || ((item.input_tokens || 0) + (item.output_tokens || 0)) || 0
+    const cost = item.cost_usd || 0
+
+    if (!map.has(cleanName)) {
+      map.set(cleanName, {
+        name: cleanName,
+        latency_ms: latency,
+        total_tokens: tokens,
+        cost_usd: cost,
+        color: AGENT_COLOR_MAP[cleanName] || "#10b981"
+      })
+    } else {
+      const existing = map.get(cleanName)!
+      existing.latency_ms += latency
+      existing.total_tokens += tokens
+      existing.cost_usd += cost
+    }
+  })
+
+  return Array.from(map.values())
+}
+
 // ── Main component ─────────────────────────────────────────────────────────────
 export function ObsDashboard() {
   const telemetry = useReviewStore((s) => s.telemetry)
@@ -94,25 +136,23 @@ export function ObsDashboard() {
   const criticalCount = selectCriticalCount({ findings } as Parameters<typeof selectCriticalCount>[0])
 
   // ── Derived: latency bar chart data ─────────────────────────────────────────
-  const latencyData = useMemo<{ name: string; ms: number }[]>(() =>
-    telemetry.map((t: NodeTelemetry) => ({
-      name: t.node_name.replace(/_node$/, '').replace(/_/g, ' '),
-      ms: Math.round(t.execution_time_ms),
+  const latencyData = useMemo<{ name: string; ms: number; color: string }[]>(() =>
+    processTelemetryData(telemetry).map(item => ({
+      name: item.name,
+      ms: Math.round(item.latency_ms),
+      color: item.color
     })),
     [telemetry]
   )
 
   // ── Derived: token pie chart data ────────────────────────────────────────────
-  const tokenData = useMemo<{ name: string; value: number }[]>(() =>
-    telemetry
-      .map((t: any) => {
-        const tokens = t.total_tokens || t.tokens || (t.input_tokens + t.output_tokens) || 0;
-        const agentName = t.agent || t.node_name?.replace('_node', '').replace('_', ' ') || 'agent';
-        return {
-          name: agentName,
-          value: tokens,
-        }
-      })
+  const tokenData = useMemo<{ name: string; value: number; color: string }[]>(() =>
+    processTelemetryData(telemetry)
+      .map(item => ({
+        name: item.name,
+        value: item.total_tokens,
+        color: item.color
+      }))
       .filter((t) => t.value > 0),
     [telemetry]
   )
@@ -162,8 +202,8 @@ export function ObsDashboard() {
                   <YAxis type="category" dataKey="name" width={100} tick={{ fontSize: 11, fill: C.secondary }} axisLine={false} tickLine={false} />
                   <Tooltip contentStyle={tooltipStyle} cursor={{ fill: C.overlay }} formatter={(v: number) => [`${v} ms`, 'Latency']} />
                   <Bar dataKey="ms" radius={[0, 6, 6, 0]}>
-                    {latencyData.map((_, i) => (
-                      <Cell key={i} fill={i === 0 ? C.charcoal : C.muted} />
+                    {latencyData.map((entry, i) => (
+                      <Cell key={i} fill={entry.color} />
                     ))}
                   </Bar>
                 </BarChart>
@@ -189,8 +229,8 @@ export function ObsDashboard() {
                     paddingAngle={3}
                     dataKey="value"
                   >
-                    {tokenData.map((_, i) => (
-                      <Cell key={i} fill={AGENT_COLOURS[i % AGENT_COLOURS.length]} />
+                    {tokenData.map((entry, i) => (
+                      <Cell key={i} fill={entry.color} />
                     ))}
                   </Pie>
                   <Tooltip contentStyle={tooltipStyle} formatter={(v: number) => [`${v.toLocaleString()}`, 'Tokens']} />
