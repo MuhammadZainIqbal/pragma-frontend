@@ -306,10 +306,38 @@ export default function App() {
             quality_score: 88,
             critical_count: 1,
             total_cost: 0.000000,
+            tokens_processed: 10260,
             telemetry: [
-              { node_name: "security_agent", latency_ms: 1240, input_tokens: 3420, output_tokens: 410, cost_usd: 0 },
-              { node_name: "architecture_agent", latency_ms: 980, input_tokens: 3100, output_tokens: 320, cost_usd: 0 },
-              { node_name: "style_agent", latency_ms: 750, input_tokens: 2800, output_tokens: 210, cost_usd: 0 }
+              {
+                node_name: "security_agent",
+                agent: "security agent",
+                latency_ms: 1240,
+                input_tokens: 3420,
+                output_tokens: 410,
+                tokens: 3830,
+                total_tokens: 3830,
+                cost_usd: 0.000000
+              },
+              {
+                node_name: "architecture_agent",
+                agent: "architecture agent",
+                latency_ms: 980,
+                input_tokens: 3100,
+                output_tokens: 320,
+                tokens: 3420,
+                total_tokens: 3420,
+                cost_usd: 0.000000
+              },
+              {
+                node_name: "style_agent",
+                agent: "style agent",
+                latency_ms: 750,
+                input_tokens: 2800,
+                output_tokens: 210,
+                tokens: 3010,
+                total_tokens: 3010,
+                cost_usd: 0.000000
+              }
             ],
             findings: [
               {
@@ -349,9 +377,12 @@ export default function App() {
           DEMO_SAMPLE_DATA.telemetry.forEach(tick => {
             appendTelemetry({
               node_name: tick.node_name,
+              agent: tick.agent,
               execution_time_ms: tick.latency_ms,
               input_tokens: tick.input_tokens,
               output_tokens: tick.output_tokens,
+              tokens: tick.tokens,
+              total_tokens: tick.total_tokens,
               cost_usd: tick.cost_usd
             })
           })
@@ -400,9 +431,12 @@ export default function App() {
             values.telemetry.forEach((tick: any) => {
               appendTelemetry({
                 node_name: String(tick.node_name ?? ''),
+                agent: tick.agent ? String(tick.agent) : undefined,
                 execution_time_ms: Number(tick.execution_time_ms ?? tick.latency_ms ?? 0),
                 input_tokens: Number(tick.input_tokens ?? 0),
                 output_tokens: Number(tick.output_tokens ?? 0),
+                tokens: tick.tokens ? Number(tick.tokens) : undefined,
+                total_tokens: tick.total_tokens ? Number(tick.total_tokens) : undefined,
                 cost_usd: Number(tick.cost_usd ?? 0),
               })
             })

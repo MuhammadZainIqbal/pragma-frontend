@@ -102,14 +102,18 @@ export function ObsDashboard() {
     [telemetry]
   )
 
-  // ── Derived: cost pie chart data ─────────────────────────────────────────────
-  const costData = useMemo<{ name: string; value: number }[]>(() =>
+  // ── Derived: token pie chart data ────────────────────────────────────────────
+  const tokenData = useMemo<{ name: string; value: number }[]>(() =>
     telemetry
-      .filter((t) => t.cost_usd > 0)
-      .map((t) => ({
-        name: t.node_name.replace(/_node$/, '').replace(/_/g, ' '),
-        value: parseFloat(t.cost_usd.toFixed(7)),
-      })),
+      .map((t: any) => {
+        const tokens = t.total_tokens || t.tokens || (t.input_tokens + t.output_tokens) || 0;
+        const agentName = t.agent || t.node_name?.replace('_node', '').replace('_', ' ') || 'agent';
+        return {
+          name: agentName,
+          value: tokens,
+        }
+      })
+      .filter((t) => t.value > 0),
     [telemetry]
   )
 
@@ -168,16 +172,16 @@ export function ObsDashboard() {
           )}
         </Section>
 
-        {/* Cost donut chart */}
-        <Section title="Token Cost Breakdown by Agent">
-          {costData.length === 0 ? (
+        {/* Token donut chart */}
+        <Section title="Token Breakdown by Agent">
+          {tokenData.length === 0 ? (
             <EmptyChart />
           ) : (
             <div style={{ width: '100%', height: 220 }}>
               <ResponsiveContainer width="100%" height="100%">
                 <PieChart>
                   <Pie
-                    data={costData}
+                    data={tokenData}
                     cx="50%"
                     cy="50%"
                     innerRadius={55}
@@ -185,11 +189,11 @@ export function ObsDashboard() {
                     paddingAngle={3}
                     dataKey="value"
                   >
-                    {costData.map((_, i) => (
+                    {tokenData.map((_, i) => (
                       <Cell key={i} fill={AGENT_COLOURS[i % AGENT_COLOURS.length]} />
                     ))}
                   </Pie>
-                  <Tooltip contentStyle={tooltipStyle} formatter={(v: number) => [`$${v.toFixed(7)}`, 'Cost']} />
+                  <Tooltip contentStyle={tooltipStyle} formatter={(v: number) => [`${v.toLocaleString()}`, 'Tokens']} />
                   <Legend iconType="circle" iconSize={8} wrapperStyle={{ fontSize: '11px', color: C.secondary }} />
                 </PieChart>
               </ResponsiveContainer>

@@ -16,9 +16,12 @@ export type ReviewStatus =
 
 export interface NodeTelemetry {
   node_name: string
+  agent?: string
   execution_time_ms: number
   input_tokens: number
   output_tokens: number
+  tokens?: number
+  total_tokens?: number
   cost_usd: number
 }
 
